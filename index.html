@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Biblioteca Portable</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.15), transparent 25%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #c4b5fd 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .btn-success.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .btn-success.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .folder-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(15, 23, 42, 0.5);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            font-weight: 600;
+            color: #c4b5fd;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr.changed td {
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .name-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .status.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+        
+        .status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .status.loading {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .category-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        
+        .cat-pill {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .cat-pill input {
+            display: none;
+        }
+        
+        .cat-pill:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .cat-pill.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #93c5fd;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .browser-warning {
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .progress-container {
+            display: none;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), #a855f7);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="browser-warning" id="warning">
+            <i class="fa-solid fa-triangle-exclamation"></i> Tu navegador no soporta la edición directa de archivos locales. Por favor, abre este archivo usando <b>Google Chrome</b>, <b>Microsoft Edge</b> o <b>Brave</b>.
+        </div>
+
+        <div class="header">
+            <h1>Organizador de Biblioteca</h1>
+            <p>100% web, portable y seguro. Todo ocurre en tu propia computadora.</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="selectFolder()">
+                <i class="fa-solid fa-folder-open"></i> Elegir Carpeta
+            </button>
+            
+            <div class="folder-info">
+                <i class="fa-solid fa-hard-drive"></i>
+                <span id="folder-name">Ninguna carpeta seleccionada</span>
+            </div>
+
+            <button class="btn btn-primary" id="btn-auto-cat" onclick="autoCategorizeAll()" style="display: none; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <i class="fa-solid fa-robot"></i> Auto-Categorizar
+            </button>
+
+            <button class="btn btn-success" id="btn-apply" onclick="applyChanges()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Aplicar Cambios
+            </button>
+        </div>
+        
+        <div class="progress-container" id="progress-container">
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted);">
+                <span id="progress-text">Procesando...</span>
+                <span id="progress-count">0 / 0</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar"></div>
+            </div>
+        </div>
+
+        <div class="search-container" id="search-container" style="display: none; margin-bottom: 20px;">
+            <div style="position: relative; width: 100%;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                <input type="text" id="search-input" placeholder="Buscar libro por título, autor, o fecha..." style="width: 100%; padding: 12px 15px 12px 40px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; font-size: 1rem; outline: none; transition: border-color 0.3s;" oninput="filterTable()">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th width="45%">Archivo Original</th>
+                        <th width="45%">Nuevo Nombre (Editable)</th>
+                        <th width="10%" style="text-align: center;">Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 3rem;">
+                            <i class="fa-solid fa-file-pdf" style="font-size: 3rem; opacity: 0.2; margin-bottom: 1rem; display: block;"></i>
+                            Selecciona una carpeta para visualizar los archivos
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let directoryHandle = null;
+        let filesData = [];
+
+        // Check compatibility
+        if (!window.showDirectoryPicker) {
+            document.getElementById('warning').style.display = 'block';
+        }
+
+        async function selectFolder() {
+            try {
+                directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                document.getElementById('folder-name').textContent = directoryHandle.name;
+                await scanDirectory();
+            } catch (err) {
+                console.error(err);
+                if (err.name !== 'AbortError') {
+                    alert("Error al acceder a la carpeta: " + err.message);
+                }
+            }
+        }
+
+        function parseFilename(filename) {
+            const lastDotIndex = filename.lastIndexOf('.');
+            if (lastDotIndex === -1) return filename; 
+            
+            const name = filename.substring(0, lastDotIndex);
+            const ext = filename.substring(lastDotIndex);
+            
+            const matchEs = name.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})[-_\s\.]+(.*)$/);
+            const matchEn = name.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})[-_\s\.]+(.*)$/);
+            
+            let dateStr = "0000-00-00";
+            let rest = name;
+            
+            if (matchEs) {
+                dateStr = `${matchEs[3]}-${matchEs[2].padStart(2, '0')}-${matchEs[1].padStart(2, '0')}`;
+                rest = matchEs[4];
+            } else if (matchEn) {
+                dateStr = `${matchEn[1]}-${matchEn[2].padStart(2, '0')}-${matchEn[3].padStart(2, '0')}`;
+                rest = matchEn[4];
+            } else {
+                const anyEn = name.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+                const anyEs = name.match(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+                if (anyEn) {
+                    dateStr = `${anyEn[1]}-${anyEn[2].padStart(2, '0')}-${anyEn[3].padStart(2, '0')}`;
+                    rest = name.replace(anyEn[0], "");
+                } else if (anyEs) {
+                    dateStr = `${anyEs[3]}-${anyEs[2].padStart(2, '0')}-${anyEs[1].padStart(2, '0')}`;
+                    rest = name.replace(anyEs[0], "");
+                }
+            }
+            
+            rest = rest.replace(/^[-_\s\.]+/, "").replace(/[-_\s\.]+$/, "");
+            
+            let title = "";
+            let author = "";
+            
+            if (rest.includes(' - ')) {
+                const parts = rest.split(' - ');
+                const p2 = parts.pop().trim();
+                const p1 = parts.join(' - ').trim();
+                
+                let score1IsTitle = 0;
+                const w1 = p1.split(' ').length;
+                const w2 = p2.split(' ').length;
+                
+                if (w1 > w2 + 1) score1IsTitle += 2;
+                if (w2 > w1 + 1) score1IsTitle -= 2;
+                
+                const titleWords = ['el', 'la', 'los', 'las', 'un', 'una', 'sobre', 'historia', 'como', 'qué', 'que', 'de', 'del', 'para', 'por', 'batalla', 'sentido', 'aventuras', 'manual', 'guia', 'introduccion'];
+                const hasTitleWord = (str) => {
+                    const words = str.toLowerCase().split(' ');
+                    return words.some(w => titleWords.includes(w));
+                };
+                
+                if (hasTitleWord(p1)) score1IsTitle += 2;
+                if (hasTitleWord(p2)) score1IsTitle -= 2;
+                
+                if (score1IsTitle >= 0) {
+                    title = p1;
+                    author = p2;
+                } else {
+                    title = p2;
+                    author = p1;
+                }
+            } else {
+                title = rest.trim();
+                author = "Desconocido";
+            }
+            
+            // Clean title and author: remove hyphens, underscores, dots
+            title = title.replace(/[_\.-]/g, ' ').trim();
+            author = author.replace(/[_\.-]/g, ' ').trim();
+            
+            if (!title) title = "Sin Título";
+            
+            let newName = `${dateStr}. ${title} - ${author}${ext}`;
+            newName = newName.replace(/\s+/g, " ");
+            return newName;
+        }
+
+        async function scanDirectory() {
+            filesData = [];
+            
+            for await (const entry of directoryHandle.values()) {
+                if (entry.kind === 'file' && !entry.name.startsWith('.')) {
+                    const oldName = entry.name;
+                    const newName = parseFilename(oldName);
+                    
+                    const file = await entry.getFile();
+                    const sizeMB = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                    
+                    filesData.push({
+                        id: 'file-' + Math.random().toString(36).substr(2, 9),
+                        handle: entry,
+                        oldName,
+                        newName,
+                        sizeMB,
+                        category: "",
+                        shouldRename: oldName !== newName,
+                        hasConflict: false
+                    });
+                }
+            }
+            
+            evaluateConflicts();
+            renderTable();
+            document.getElementById('search-container').style.display = filesData.length > 0 ? 'block' : 'none';
+            document.getElementById('btn-auto-cat').style.display = filesData.length > 0 ? 'inline-flex' : 'none';
+        }
+
+        function evaluateConflicts() {
+            filesData.forEach(f => f.hasConflict = false);
+            const nameGroups = {};
+            filesData.forEach(f => {
+                const lowerNewName = f.newName.toLowerCase();
+                if (!nameGroups[lowerNewName]) nameGroups[lowerNewName] = [];
+                nameGroups[lowerNewName].push(f);
+            });
+            for (const key in nameGroups) {
+                if (nameGroups[key].length > 1) {
+                    nameGroups[key].forEach(f => f.hasConflict = true);
+                }
+            }
+            
+            // Sort: Conflicts first, then Desconocidos, then changed, then unchanged
+            filesData.sort((a, b) => {
+                if (a.hasConflict && !b.hasConflict) return -1;
+                if (!a.hasConflict && b.hasConflict) return 1;
+                if (a.hasConflict && b.hasConflict) return a.newName.localeCompare(b.newName);
+                
+                const aDesc = a.newName.toLowerCase().includes('desconocido');
+                const bDesc = b.newName.toLowerCase().includes('desconocido');
+                if (aDesc && !bDesc) return -1;
+                if (!aDesc && bDesc) return 1;
+                
+                return b.shouldRename - a.shouldRename;
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            if (filesData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No se encontraron archivos válidos</td></tr>`;
+                const sc = document.getElementById('search-container');
+                if (sc) sc.style.display = 'none';
+                return;
+            }
+
+            let hasChanges = false;
+            
+            filesData.forEach(fileObj => {
+                if (fileObj.shouldRename || fileObj.category !== "") hasChanges = true;
+                
+                const tr = document.createElement('tr');
+                if (fileObj.hasConflict) {
+                    tr.style.background = 'rgba(239, 68, 68, 0.15)';
+                    tr.style.borderLeft = '4px solid #ef4444';
+                } else if (fileObj.shouldRename || fileObj.category !== "") {
+                    tr.classList.add('changed');
+                }
+                
+                tr.innerHTML = `
+                    <td style="word-break: break-all; opacity: 0.8;">
+                        ${fileObj.oldName} <br>
+                        <span style="font-size: 0.8em; color: var(--text-muted);"><i class="fa-solid fa-weight-scale"></i> ${fileObj.sizeMB}</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" class="name-input" id="input-${fileObj.id}" value="${fileObj.newName}" ${fileObj.shouldRename || fileObj.hasConflict || fileObj.category !== "" ? '' : 'style="opacity: 0.6;"'} onchange="updateNewName('${fileObj.id}', this.value)">
+                            <button onclick="swapTitleAuthor('${fileObj.id}')" title="Intercambiar Título y Autor (útil si estaban al revés)" style="background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); color: #c4b5fd; border-radius: 6px; cursor: pointer; padding: 0 10px; transition: all 0.2s;">
+                                <i class="fa-solid fa-right-left"></i>
+                            </button>
+                            <button id="internet-btn-${fileObj.id}" onclick="searchInternet('${fileObj.id}')" title="Buscar y corregir datos en Internet (Google Books / OpenLibrary)" style="background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; border-radius: 6px; cursor: pointer; padding: 0 10px; transition: all 0.2s;">
+                                <i class="fa-solid fa-globe"></i>
+                            </button>
+                            ${fileObj.newName.toLowerCase().includes('desconocido') ? `
+                            <button onclick="magicExtractAuthor('${fileObj.id}')" title="Mágicamente separar Autor basado en Mayúsculas" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; border-radius: 6px; cursor: pointer; padding: 0 10px; transition: all 0.2s;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                        <div class="category-pills" id="cat-${fileObj.id}">
+                            <label class="cat-pill ${fileObj.category === '' ? 'active' : ''}" title="Carpeta Principal">
+                                <input type="radio" name="cat-${fileObj.id}" value="" ${fileObj.category === '' ? 'checked' : ''} onchange="updateCategory('${fileObj.id}', this.value)"> Raíz
+                            </label>
+                            <label class="cat-pill ${fileObj.category === 'Teatro' ? 'active' : ''}">
+                                <input type="radio" name="cat-${fileObj.id}" value="Teatro" ${fileObj.category === 'Teatro' ? 'checked' : ''} onchange="updateCategory('${fileObj.id}', this.value)"> Teatro
+                            </label>
+                            <label class="cat-pill ${fileObj.category === 'Narrativa - Novelas' ? 'active' : ''}">
+                                <input type="radio" name="cat-${fileObj.id}" value="Narrativa - Novelas" ${fileObj.category === 'Narrativa - Novelas' ? 'checked' : ''} onchange="updateCategory('${fileObj.id}', this.value)"> Narrativa - Novelas
+                            </label>
+                            <label class="cat-pill ${fileObj.category === 'Ensayos y no Ficcion' ? 'active' : ''}">
+                                <input type="radio" name="cat-${fileObj.id}" value="Ensayos y no Ficcion" ${fileObj.category === 'Ensayos y no Ficcion' ? 'checked' : ''} onchange="updateCategory('${fileObj.id}', this.value)"> Ensayos y no Ficción
+                            </label>
+                            <label class="cat-pill ${fileObj.category === 'Cuentos y Relatos' ? 'active' : ''}">
+                                <input type="radio" name="cat-${fileObj.id}" value="Cuentos y Relatos" ${fileObj.category === 'Cuentos y Relatos' ? 'checked' : ''} onchange="updateCategory('${fileObj.id}', this.value)"> Cuentos y Relatos
+                            </label>
+                            <label class="cat-pill ${fileObj.category === 'Cuentos sueltos y Otros Textos' ? 'active' : ''}">
+                                <input type="radio" name="cat-${fileObj.id}" value="Cuentos sueltos y Otros Textos" ${fileObj.category === 'Cuentos sueltos y Otros Textos' ? 'checked' : ''} onchange="updateCategory('${fileObj.id}', this.value)"> Cuentos sueltos y Otros Textos
+                            </label>
+                        </div>
+                        ${fileObj.hasConflict ? '<div style="color: #f87171; font-size: 0.8em; margin-top: 4px;"><i class="fa-solid fa-triangle-exclamation"></i> Conflicto: Varios archivos tendrán este nombre</div>' : ''}
+                    </td>
+                    <td style="text-align: center;">
+                        <button onclick="deleteFile('${fileObj.id}')" title="Eliminar este archivo (conservar el otro)" style="background: transparent; border: none; color: #f87171; cursor: pointer; margin-right: 10px; opacity: 0.8; font-size: 1.1rem; padding: 4px;">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        <span class="status" id="status-${fileObj.id}">
+                            ${fileObj.shouldRename || fileObj.category !== "" ? '<i class="fa-solid fa-pen" style="opacity:0.5"></i>' : '<i class="fa-solid fa-check" style="opacity:0.2"></i>'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const btnApply = document.getElementById('btn-apply');
+            if (hasChanges && !filesData.some(f => f.hasConflict)) {
+                btnApply.classList.add('active');
+            } else {
+                btnApply.classList.remove('active');
+            }
+            
+            filterTable(); // Re-apply filter if user was searching while rendering
+        }
+        
+        async function deleteFile(id) {
+            const fileObj = filesData.find(f => f.id === id);
+            if (!fileObj) return;
+            
+            const conf = confirm(`¿Estás seguro de que quieres eliminar PERMANENTEMENTE el archivo:\n\n${fileObj.oldName}\n\nEsta acción NO se puede deshacer.`);
+            if (conf) {
+                try {
+                    await directoryHandle.removeEntry(fileObj.oldName);
+                    await scanDirectory(); // Reload completely to clear it out
+                } catch (e) {
+                    alert("Error al eliminar: " + e.message);
+                }
+            }
+        }
+
+        function swapTitleAuthor(id) {
+            const fileObj = filesData.find(f => f.id === id);
+            if (!fileObj) return;
+            
+            const name = fileObj.newName;
+            const lastDotIndex = name.lastIndexOf('.');
+            const base = lastDotIndex !== -1 ? name.substring(0, lastDotIndex) : name;
+            const ext = lastDotIndex !== -1 ? name.substring(lastDotIndex) : '';
+            
+            // Expected format: YYYY-MM-DD. Title - Author
+            const dateMatch = base.match(/^(\d{4}-\d{2}-\d{2})\.\s*(.*?)\s*-\s*(.*)$/);
+            if (dateMatch) {
+                const datePart = dateMatch[1];
+                const titlePart = dateMatch[2].trim();
+                const authorPart = dateMatch[3].trim();
+                
+                fileObj.newName = `${datePart}. ${authorPart} - ${titlePart}${ext}`;
+                fileObj.shouldRename = fileObj.oldName !== fileObj.newName;
+                
+                evaluateConflicts();
+                renderTable();
+            } else {
+                // Fallback for old formatting if somehow exists
+                const parts = base.split(' - ');
+                if (parts.length >= 3) {
+                    const p1 = parts[parts.length - 2];
+                    const p2 = parts[parts.length - 1];
+                    parts[parts.length - 2] = p2;
+                    parts[parts.length - 1] = p1;
+                    
+                    fileObj.newName = parts.join(' - ') + ext;
+                    fileObj.shouldRename = fileObj.oldName !== fileObj.newName;
+                    
+                    evaluateConflicts();
+                    renderTable();
+                }
+            }
+        }
+
+        function magicExtractAuthor(id) {
+            const fileObj = filesData.find(f => f.id === id);
+            if (!fileObj) return;
+            
+            const name = fileObj.newName;
+            const lastDotIndex = name.lastIndexOf('.');
+            const base = lastDotIndex !== -1 ? name.substring(0, lastDotIndex) : name;
+            const ext = lastDotIndex !== -1 ? name.substring(lastDotIndex) : '';
+            
+            // Expected format: YYYY-MM-DD. Title - Author
+            const dateMatch = base.match(/^(\d{4}-\d{2}-\d{2})\.\s*(.*?)\s*-\s*(.*)$/);
+            if (dateMatch) {
+                const datePart = dateMatch[1];
+                let title = dateMatch[2].trim();
+                let author = dateMatch[3].trim();
+                
+                if (author.toLowerCase().trim() === 'desconocido') {
+                    const words = title.split(' ');
+                    let authorWords = [];
+                    // Scan words backwards looking for capitalized ones
+                    for (let i = words.length - 1; i >= 1; i--) {
+                        const w = words[i];
+                        if (/^[A-ZÁÉÍÓÚÑ]/.test(w)) {
+                            authorWords.unshift(w);
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    if (authorWords.length >= 1) {
+                        author = authorWords.join(' ');
+                        title = words.slice(0, words.length - authorWords.length).join(' ').trim();
+                        
+                        fileObj.newName = `${datePart}. ${title} - ${author}${ext}`;
+                        fileObj.shouldRename = fileObj.oldName !== fileObj.newName;
+                        
+                        evaluateConflicts();
+                        renderTable();
+                    } else {
+                        alert("No se detectaron palabras en Mayúscula al final del título para extraer como autor.");
+                    }
+                }
+            }
+        }
+
+        async function searchInternet(id, silentIfNotFound = false) {
+            const fileObj = filesData.find(f => f.id === id);
+            if (!fileObj) return false;
+            
+            const btnIcon = document.getElementById(`internet-btn-${id}`);
+            if (btnIcon) {
+                btnIcon.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            }
+            
+            try {
+                const name = fileObj.newName;
+                const lastDotIndex = name.lastIndexOf('.');
+                const base = lastDotIndex !== -1 ? name.substring(0, lastDotIndex) : name;
+                const ext = lastDotIndex !== -1 ? name.substring(lastDotIndex) : '';
+                
+                let fullQuery = base.replace(/^\d{4}-\d{2}-\d{2}[\.\-\s]+/, '').replace(/-/g, ' ');
+                fullQuery = fullQuery.replace(/Desconocido/ig, '').trim();
+                
+                const words = fullQuery.split(' ');
+                const queries = [
+                    fullQuery, // Búsqueda completa
+                    words.slice(0, Math.max(3, words.length - 1)).join(' '), // Quitando la última palabra
+                    words.slice(0, Math.max(2, words.length - 2)).join(' ')  // Quitando las ultimas dos
+                ];
+                
+                let foundTitle = '';
+                let foundAuthor = '';
+                
+                for (const q of queries) {
+                    if (!q || q.length < 3) continue;
+                    
+                    // Intento 1: Google Books API (Excelente para libros en español)
+                    try {
+                        const gResponse = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=1`);
+                        const gData = await gResponse.json();
+                        if (gData.items && gData.items.length > 0) {
+                            const info = gData.items[0].volumeInfo;
+                            foundTitle = info.title;
+                            foundAuthor = (info.authors && info.authors.length > 0) ? info.authors.join(', ') : '';
+                            if (foundTitle) break;
+                        }
+                    } catch(e) {}
+                    
+                    // Intento 2: OpenLibrary API (Alternativa libre)
+                    if (!foundTitle) {
+                        try {
+                            const oResponse = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1`);
+                            const oData = await oResponse.json();
+                            if (oData.docs && oData.docs.length > 0) {
+                                const doc = oData.docs[0];
+                                foundTitle = doc.title;
+                                foundAuthor = (doc.author_name && doc.author_name.length > 0) ? doc.author_name[0] : '';
+                                if (foundTitle) break;
+                            }
+                        } catch(e) {}
+                    }
+                }
+                
+                if (foundTitle) {
+                    if (!foundAuthor) foundAuthor = "Desconocido";
+                    
+                    foundTitle = foundTitle.replace(/[_\.-]/g, ' ').trim();
+                    foundAuthor = foundAuthor.replace(/[_\.-]/g, ' ').trim();
+                    
+                    let dateStr = "0000-00-00";
+                    const dateMatch = base.match(/^(\d{4}-\d{2}-\d{2})/);
+                    if (dateMatch) dateStr = dateMatch[1];
+                    
+                    let suggestedName = `${dateStr}. ${foundTitle} - ${foundAuthor}${ext}`;
+                    suggestedName = suggestedName.replace(/\s+/g, ' ');
+                    
+                    if (confirm(`Archivo: ${fileObj.oldName}\n\nResultados de Internet:\nTítulo: ${foundTitle}\nAutor: ${foundAuthor}\n\n¿Deseas aplicar este nombre?\n\n${suggestedName}`)) {
+                        fileObj.newName = suggestedName;
+                        fileObj.shouldRename = fileObj.oldName !== fileObj.newName;
+                        evaluateConflicts();
+                        renderTable();
+                        return true;
+                    }
+                    return false;
+                } else {
+                    if (!silentIfNotFound) alert("No se encontraron resultados en Internet para este libro.");
+                    return false;
+                }
+            } catch (e) {
+                if (!silentIfNotFound) alert("Error al conectar con Internet: " + e.message);
+                return false;
+            } finally {
+                if (btnIcon) {
+                    btnIcon.innerHTML = '<i class="fa-solid fa-globe"></i>';
+                }
+            }
+        }
+
+        function updateNewName(id, value) {
+            const fileObj = filesData.find(f => f.id === id);
+            if (fileObj) {
+                fileObj.newName = value.trim();
+                fileObj.shouldRename = fileObj.oldName !== fileObj.newName;
+                
+                evaluateConflicts();
+                renderTable();
+            }
+        }
+
+        function updateCategory(id, value) {
+            const fileObj = filesData.find(f => f.id === id);
+            if (fileObj) {
+                fileObj.category = value;
+                
+                // Actualizar estilo visual de las pildoras
+                const container = document.getElementById(`cat-${id}`);
+                if (container) {
+                    container.querySelectorAll('.cat-pill').forEach(lbl => lbl.classList.remove('active'));
+                    const checkedInput = container.querySelector(`input[value="${value}"]`);
+                    if (checkedInput) {
+                        checkedInput.parentElement.classList.add('active');
+                    }
+                }
+                
+                const btnApply = document.getElementById('btn-apply');
+                if (filesData.some(f => (f.shouldRename || f.category !== "") && !f.hasConflict)) {
+                    btnApply.classList.add('active');
+                } else {
+                    btnApply.classList.remove('active');
+                }
+                
+                const tr = document.getElementById(`input-${id}`).closest('tr');
+                if (tr && !fileObj.hasConflict) {
+                    if (fileObj.shouldRename || fileObj.category !== "") {
+                        tr.classList.add('changed');
+                    } else {
+                        tr.classList.remove('changed');
+                    }
+                    
+                    const statusIcon = document.getElementById(`status-${id}`);
+                    if (statusIcon) {
+                        statusIcon.innerHTML = (fileObj.shouldRename || fileObj.category !== "") ? '<i class="fa-solid fa-pen" style="opacity:0.5"></i>' : '<i class="fa-solid fa-check" style="opacity:0.2"></i>';
+                    }
+                }
+            }
+        }
+
+        async function applyChanges() {
+            const filesToProcess = filesData.filter(f => f.shouldRename || f.category !== "");
+            if (filesToProcess.length === 0) return;
+
+            // Interceptar archivos con "Desconocido"
+            const desconocidos = filesToProcess.filter(f => f.newName.toLowerCase().includes('desconocido'));
+            if (desconocidos.length > 0) {
+                const wantAutoFix = confirm(`Tienes ${desconocidos.length} archivo(s) listos para procesar con Autor Desconocido.\n\n¿Quieres que el programa busque profundamente en Internet para intentar corregirlos automáticamente antes de aplicar los cambios?`);
+                if (wantAutoFix) {
+                    for (const fileObj of desconocidos) {
+                        await searchInternet(fileObj.id, true); // true = silencioso si no encuentra
+                    }
+                    alert("Búsqueda profunda finalizada. Revisa la tabla y presiona 'Aplicar Cambios' de nuevo cuando estés listo para renombrar y mover los archivos en tu disco.");
+                    return; // Salimos para que el usuario revise antes de aplicar
+                }
+            }
+
+            const btnApply = document.getElementById('btn-apply');
+            btnApply.classList.remove('active');
+            btnApply.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aplicando...';
+
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressCount = document.getElementById('progress-count');
+            
+            progressContainer.style.display = 'flex';
+            
+            let completed = 0;
+            let errors = 0;
+
+            for (const fileObj of filesToProcess) {
+                const statusIcon = document.getElementById(`status-${fileObj.id}`);
+                statusIcon.innerHTML = '<i class="fa-solid fa-spinner"></i>';
+                statusIcon.className = 'status loading';
+
+                try {
+                    // Determinar la carpeta de destino
+                    let targetDirHandle = directoryHandle;
+                    if (fileObj.category !== "") {
+                        targetDirHandle = await directoryHandle.getDirectoryHandle(fileObj.category, { create: true });
+                    }
+                    
+                    // Check if target file already exists en destino
+                    let exists = false;
+                    try {
+                        await targetDirHandle.getFileHandle(fileObj.newName);
+                        exists = true;
+                    } catch (e) { /* File doesn't exist, which is good */ }
+
+                    if (exists && (fileObj.category !== "" || fileObj.oldName.toLowerCase() !== fileObj.newName.toLowerCase())) {
+                        throw new Error("El archivo destino ya existe en la ubicación especificada");
+                    }
+
+                    // 1. Get original file data
+                    const oldFile = await fileObj.handle.getFile();
+                    
+                    // 2. Create new file handle in target directory
+                    const newHandle = await targetDirHandle.getFileHandle(fileObj.newName, { create: true });
+                    
+                    // 3. Write data to new file
+                    const writable = await newHandle.createWritable();
+                    await writable.write(oldFile);
+                    await writable.close();
+                    
+                    // 4. Delete old file from the root directory
+                    await directoryHandle.removeEntry(fileObj.oldName);
+
+                    statusIcon.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    statusIcon.className = 'status success';
+                    
+                    const tr = statusIcon.closest('tr');
+                    if (tr) {
+                        tr.classList.remove('changed');
+                        tr.cells[0].textContent = fileObj.newName;
+                    }
+                    
+                    // Update internal state
+                    fileObj.oldName = fileObj.newName;
+                    fileObj.shouldRename = false;
+                    fileObj.handle = newHandle;
+                } catch (error) {
+                    console.error(error);
+                    errors++;
+                    statusIcon.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    statusIcon.className = 'status error';
+                    statusIcon.title = error.message;
+                }
+
+                completed++;
+                const percent = Math.round((completed / filesToProcess.length) * 100);
+                progressBar.style.width = percent + '%';
+                progressCount.textContent = `${completed} / ${filesToProcess.length}`;
+            }
+
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                btnApply.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Aplicar Cambios';
+                
+                if (errors > 0) {
+                    alert(`Proceso finalizado con ${errors} errores. Los archivos con tilde rojo no se pudieron modificar (por ejemplo, si el archivo destino ya existe o está en uso). Puedes editar el nombre manualmente en su celda y volver a intentar.`);
+                }
+                
+                if (filesData.some(f => f.shouldRename)) {
+                    btnApply.classList.add('active');
+                }
+            }, 1000);
+        }
+
+        function filterTable() {
+            const input = document.getElementById('search-input');
+            if (!input) return;
+            const filter = input.value.toLowerCase();
+            const tbody = document.getElementById('table-body');
+            const rows = tbody.getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].cells.length === 1) continue; 
+                
+                const oldNameCell = rows[i].cells[0];
+                const inputElement = rows[i].querySelector('.name-input');
+                
+                if (oldNameCell && inputElement) {
+                    const oldName = oldNameCell.textContent || oldNameCell.innerText;
+                    const newName = inputElement.value;
+                    if (oldName.toLowerCase().indexOf(filter) > -1 || newName.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        async function autoCategorizeAll() {
+            if (filesData.length === 0) return;
+            
+            const btn = document.getElementById('btn-auto-cat');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Categorizando...';
+            btn.disabled = true;
+            
+            let categorizedCount = 0;
+            
+            for (const fileObj of filesData) {
+                // Si ya tiene categoria manualmente elegida, la salteamos
+                if (fileObj.category !== "") continue;
+                
+                const name = fileObj.newName;
+                const lastDotIndex = name.lastIndexOf('.');
+                const base = lastDotIndex !== -1 ? name.substring(0, lastDotIndex) : name;
+                
+                let fullQuery = base.replace(/^\d{4}-\d{2}-\d{2}[\.\-\s]+/, '').replace(/-/g, ' ');
+                fullQuery = fullQuery.replace(/Desconocido/ig, '').trim();
+                if (!fullQuery || fullQuery.length < 3) continue;
+
+                // Implementar "Deep Search" para aumentar la tasa de éxito
+                const words = fullQuery.split(' ');
+                const queries = [
+                    fullQuery, // Búsqueda completa
+                    words.slice(0, Math.max(3, words.length - 1)).join(' '), // Menos la última palabra
+                    words.slice(0, Math.max(2, words.length - 2)).join(' ')  // Menos las últimas dos
+                ];
+
+                let foundCat = "";
+                
+                for (const q of queries) {
+                    if (!q || q.length < 3) continue;
+                    
+                    // Pausa de cortesía para no saturar la API y evitar bloqueos (Rate Limit 429)
+                    await new Promise(r => setTimeout(r, 250));
+                    
+                    // Intento 1: Google Books Categories
+                    try {
+                        const gResponse = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=1`);
+                        const gData = await gResponse.json();
+                        if (gData.items && gData.items.length > 0) {
+                            const info = gData.items[0].volumeInfo;
+                            if (info.categories) {
+                                foundCat = mapCategory(info.categories);
+                                if (foundCat) break;
+                            }
+                        }
+                    } catch(e) {}
+                    
+                    // Intento 2: OpenLibrary Subjects
+                    if (!foundCat) {
+                        try {
+                            const oResponse = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1`);
+                            const oData = await oResponse.json();
+                            if (oData.docs && oData.docs.length > 0) {
+                                const doc = oData.docs[0];
+                                if (doc.subject) {
+                                    foundCat = mapCategory(doc.subject);
+                                    if (foundCat) break;
+                                }
+                            }
+                        } catch(e) {}
+                    }
+                }
+                
+                // Intento 3: Palabras clave en el título mismo si Internet falló
+                if (!foundCat) {
+                    foundCat = mapCategory([fullQuery]);
+                }
+                
+                if (foundCat) {
+                    fileObj.category = foundCat;
+                    
+                    const container = document.getElementById(`cat-${fileObj.id}`);
+                    if (container) {
+                        container.querySelectorAll('.cat-pill').forEach(lbl => lbl.classList.remove('active'));
+                        const checkedInput = container.querySelector(`input[value="${foundCat}"]`);
+                        if (checkedInput) {
+                            checkedInput.checked = true;
+                            checkedInput.parentElement.classList.add('active');
+                        }
+                    }
+                    
+                    const tr = document.getElementById(`input-${fileObj.id}`).closest('tr');
+                    if (tr && !fileObj.hasConflict) tr.classList.add('changed');
+                    
+                    const statusIcon = document.getElementById(`status-${fileObj.id}`);
+                    if (statusIcon) statusIcon.innerHTML = '<i class="fa-solid fa-pen" style="opacity:0.5"></i>';
+                    
+                    categorizedCount++;
+                }
+            }
+            
+            const btnApply = document.getElementById('btn-apply');
+            if (filesData.some(f => (f.shouldRename || f.category !== "") && !f.hasConflict)) {
+                btnApply.classList.add('active');
+            }
+            
+            btn.innerHTML = '<i class="fa-solid fa-robot"></i> Auto-Categorizar';
+            btn.disabled = false;
+            
+            alert(`Auto-categorización finalizada.\n\nLa Inteligencia Artificial logró asignar ${categorizedCount} libros a sus respectivas carpetas basándose en la información de Internet.\n\nPor favor revisa que sean correctas en la tabla antes de hacer clic en "Aplicar Cambios".`);
+        }
+        
+        function mapCategory(categoriesArr) {
+            if (!categoriesArr || categoriesArr.length === 0) return "";
+            
+            // Removemos acentos y pasamos a minúsculas para un emparejamiento perfecto (ej. "Ficción" -> "ficcion")
+            const catsStr = categoriesArr.join(' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            
+            // 1. Teatro
+            if (catsStr.match(/teatro|drama|theater|play|act/)) {
+                return "Teatro";
+            }
+            // 2. Cuentos y Relatos (tiene prioridad sobre Novela para evitar conflictos de "Ficción Corta")
+            if (catsStr.match(/cuento|relato|short stor|tale|antologia|coleccion|fabul/)) {
+                return "Cuentos y Relatos";
+            }
+            // 3. Narrativa - Novelas
+            if (catsStr.match(/novela|narrativa|fiction|ficcion|romance|thriller|misterio|fantasia|literatura/)) {
+                return "Narrativa - Novelas";
+            }
+            // 4. Ensayos y No Ficción
+            if (catsStr.match(/ensayo|historia|biografia|ciencia|filosofia|no ficcion|negocio|autoayuda|psicologia|religion|politica|social|arte|history|biography|science|philosophy|essay|non-fiction|business|self-help|psychology|art/)) {
+                return "Ensayos y no Ficcion";
+            }
+            // 5. Cuentos sueltos y Otros Textos
+            if (catsStr.match(/poesia|poetry|text|humor|comic/)) {
+                return "Cuentos sueltos y Otros Textos";
+            }
+            
+            return ""; // Deja en blanco (Carpeta Principal) si no estamos seguros.
+        }
+    </script>
+</body>
+</html>
